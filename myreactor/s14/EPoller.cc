@@ -110,8 +110,15 @@ void update(int operation, Channel* channel)
 
 void fillActiveChannels(int numEvents, ChannelList* activeChannels)
 {
+    assert(implicit_cast<size_t>(numEvents) <= events_.size());
     for (int i=0; i<numEvents; ++i)
     {
-        activeChannels->push_back();                
+        Channel * channel  = static_cast<Channel *>(events_[i].data.ptr);
+        int fd = channel->fd();
+        ChannelMap::const_iterator it = channels_.find(fd);
+        assert(it != channels_.end());
+        assert(it->second == channel);
+        channel->set_revents(events_[i].events);
+        activeChannels->push_back(channel);                
     }
 }
