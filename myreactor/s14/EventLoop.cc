@@ -1,4 +1,6 @@
 #include "EventLoop.h"
+#include <logging/Logging.h>
+#include <stdio.h>
 
 using namespace muduo;
 
@@ -31,6 +33,8 @@ void EventLoop::loop()
 
     LOG_TRACE << "EventLoop start...";
     LOG_TRACE << "EventLoop stop...";
+    ::printf("EventLoop start...\n");
+    ::printf("EventLoop stop...\n");
 
     looping_ = false;
 }

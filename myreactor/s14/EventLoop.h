@@ -1,14 +1,15 @@
 #ifndef MUDUO_NET_EVENTLOOP_H
 #define MUDUO_NET_EVENTLOOP_H
 
-#include <boost/noncopyable.h>
+#include <boost/noncopyable.hpp>
+#include <thread/Thread.h>
 
 namespace muduo
 {
 
 class EventLoop : boost::noncopyable 
 {
-Public:
+public:
     EventLoop();
     ~EventLoop();
 
@@ -22,10 +23,10 @@ Public:
         }
     }
 
-    bool isInLoopThread() { return threadId_ == CurrentThread::Tid() }
+    bool isInLoopThread() { return threadId_ == CurrentThread::tid(); }
 
 private:    
-    void abortNotInLoopThread()
+    void abortNotInLoopThread();
 
     bool looping_;    
     const pid_t threadId_;
