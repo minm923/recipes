@@ -28,6 +28,7 @@ EventLoop::~EventLoop()
 
 void EventLoop::loop()
 {
+    assertInLoopThread();
     assert(!looping_);            
     looping_ = true;    
 
