@@ -23,15 +23,12 @@ public:
     ~EPoller();
 
     void updateChannel(Channel* channel);        
-
+    
+    void removeChannel(Channel* channel);
 
     Timestamp poll(int timeoutMs, ChannelList* activeChannels);
 
     void assertInLoopThread() { ownerLoop_->assertInLoopThread(); }
-
-
-
-
 
 
 private:

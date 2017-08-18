@@ -8,7 +8,9 @@ __thread EventLoop* t_loopInThisThread = NULL;
 
 EventLoop::EventLoop()
     : looping_(false),
-      threadId_(CurrentThread::tid())
+      quit_(false),
+      threadId_(CurrentThread::tid()),
+      poller_(new EPoller(this))  
 {
     LOG_TRACE << "EventLoop created " << this  << " in thread " << threadId_;
     if (t_loopInThisThread)
@@ -31,15 +33,20 @@ void EventLoop::loop()
     assertInLoopThread();
     assert(!looping_);            
     looping_ = true;    
+    quit_    = false;        
 
-    LOG_TRACE << "EventLoop start...";
-    LOG_TRACE << "EventLoop stop...";
-    ::printf("EventLoop start...\n");
-    ::printf("EventLoop stop...\n");
+    while(!quit_)
+    {
+
+    }
 
     looping_ = false;
 }
 
+void EventLoop::quit()
+{
+    quit_ = true;
+}
 
 void EventLoop::abortNotInLoopThread()
 {

@@ -68,12 +68,12 @@ void EPoller::updateChannel(Channel* channel)
             assert(channels_.find(fd) != channels_.end());
             assert(channels_.find(fd) == channel);
         }
-        channel->set_index(kAdded);        
+        channel->set_index(kAdded);
         update(EPOLL_CTL_ADD, channel);
     } 
-    else
+    else// kAdded
     {
-        assert(channels_.find(fd) != channels_.end());       
+        assert(channels_.find(fd) != channels_.end());
         assert(channels_[fd] == channel);
         assert(index == kAdded);
         if (channel->isNoneEvent())
@@ -121,4 +121,27 @@ void fillActiveChannels(int numEvents, ChannelList* activeChannels)
         channel->set_revents(events_[i].events);
         activeChannels->push_back(channel);                
     }
+}
+
+void removeChannel(Channel* channel)
+{
+    assertInLoopThread();
+    const int fd = channel->fd();
+    LOG_TRACE << "fd = " << fd;
+    assert(channels_.find(fd) != channels_.end());
+    assert(channels_[fd] == channel);
+    assert(channel->isNoneEvent());
+
+    const int index = channel->index();
+    assert(index == kAdded || index == kDeleted);
+    size_t n = channels_.erase(fd);
+    (void)n;
+    assert(n == 1);
+
+    if (index == kAdded)
+    {
+        update(EPOLL_CTL_DEL, channel);
+    }
+    
+    channel->set_index(kNew);
 }
