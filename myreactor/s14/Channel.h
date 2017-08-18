@@ -1,5 +1,5 @@
-#define MUDUO_CHANNEL_H
 #ifndef MUDUO_CHANNEL_H
+#define MUDUO_CHANNEL_H
 
 #include <boost/noncopyable.hpp>
 #include <boost/function.hpp>
@@ -28,10 +28,12 @@ public:
 
     void handleEvent();        
 
+    EventLoop* ownerLoop() { return loop_; }
+
     int fd() { return fd_; }
     int events() { return events_; }
     int index() { return index_; }
-    int set_index(int idx) { index_ = idx; }
+    void set_index(int idx) { index_ = idx; }
     void set_revents(int revt) { revents_ = revt; }
     bool isNoneEvent() { return events_ == kNoneEvent; }
 

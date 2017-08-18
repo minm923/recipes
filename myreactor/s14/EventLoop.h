@@ -4,9 +4,13 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <thread/Thread.h>
+#include <vector>
 
 namespace muduo
 {
+
+class EPoller;    
+class Channel;
 
 class EventLoop : boost::noncopyable 
 {
@@ -27,17 +31,18 @@ public:
 
     bool isInLoopThread() { return threadId_ == CurrentThread::tid(); }
 
-    void updateChannel();
-
-    EventLoop* ownerLoop() { return loop_; }
+    void updateChannel(Channel* channel);
 
 private:    
+    typedef std::vector<Channel*> ChannelList;
+    
     void abortNotInLoopThread();
 
     bool looping_;    
     bool quit_;
     const pid_t threadId_;
     boost::scoped_ptr<EPoller> poller_;
+    ChannelList activeChannels_;
 };
 
 

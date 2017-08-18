@@ -13,8 +13,7 @@ const int kDeleted = 2;
 
 EPoller::EPoller(EventLoop* loop)
     : ownerLoop_(loop),
-      epollfd_(::epoll_create1(EPOLL_CLOEXEC)),
-      channels_(kInitEventListSize)
+      epollfd_(::epoll_create1(EPOLL_CLOEXEC))
 {
     if (epollfd_ < 0)
     {
