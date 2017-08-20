@@ -1,6 +1,8 @@
 #include "EPoller.h" 
+#include "Channel.h"
 #include <sys/epoll.h>
 #include <errno.h>
+#include "logging/Logging.h"
 
 using namespace muduo;
 
@@ -13,7 +15,8 @@ const int kDeleted = 2;
 
 EPoller::EPoller(EventLoop* loop)
     : ownerLoop_(loop),
-      epollfd_(::epoll_create1(EPOLL_CLOEXEC))
+      epollfd_(::epoll_create1(EPOLL_CLOEXEC)),
+      events_(kInitEventListSize)
 {
     if (epollfd_ < 0)
     {
@@ -34,9 +37,17 @@ Timestamp EPoller::poll(int timeoutMs, ChannelList* activeChannels)
                                  static_cast<int>(events_.size()),
                                  timeoutMs);    
 
+    Timestamp  n;
+    n.now();
     if (numEvents > 0)
     {
+        LOG_TRACE << numEvents << "events happended";
         fillActiveChannels(numEvents, activeChannels);                    
+
+        if (implicit_cast<size_t>(numEvents) == events_.size())
+        {
+            events_.resize(events_.size() * 2);
+        }
     }
     else if (numEvents == 0)
     {
@@ -47,6 +58,7 @@ Timestamp EPoller::poll(int timeoutMs, ChannelList* activeChannels)
         LOG_SYSERR << "EPoller::poll";
     }
 
+    return n;
 }
 
 void EPoller::updateChannel(Channel* channel)
@@ -65,7 +77,7 @@ void EPoller::updateChannel(Channel* channel)
         else// kDeleted == index
         {
             assert(channels_.find(fd) != channels_.end());
-            assert(channels_.find(fd) == channel);
+            assert(channels_[fd] == channel);
         }
         channel->set_index(kAdded);
         update(EPOLL_CTL_ADD, channel);
@@ -87,14 +99,14 @@ void EPoller::updateChannel(Channel* channel)
     }
 }
 
-void update(int operation, Channel* channel)
+void EPoller::update(int operation, Channel* channel)
 {
     struct epoll_event event;
     bzero(&event, sizeof event);
     event.events = channel->events();
     event.data.ptr = static_cast<void *>(channel);
     const int fd = channel->fd();
-    if(::epoll_ctl(epollfd_, operation, fd, &ev) < 0)
+    if(::epoll_ctl(epollfd_, operation, fd, &event) < 0)
     {
         if (operation == EPOLL_CTL_DEL)
         {
@@ -107,7 +119,7 @@ void update(int operation, Channel* channel)
     }
 }
 
-void fillActiveChannels(int numEvents, ChannelList* activeChannels)
+void EPoller::fillActiveChannels(int numEvents, ChannelList* activeChannels)
 {
     assert(implicit_cast<size_t>(numEvents) <= events_.size());
     for (int i=0; i<numEvents; ++i)
@@ -122,7 +134,7 @@ void fillActiveChannels(int numEvents, ChannelList* activeChannels)
     }
 }
 
-void removeChannel(Channel* channel)
+void EPoller::removeChannel(Channel* channel)
 {
     assertInLoopThread();
     const int fd = channel->fd();
