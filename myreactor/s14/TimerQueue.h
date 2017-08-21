@@ -4,11 +4,15 @@
 #include <boost/noncopyable.hpp>
 #include <set>
 #include <vector>
+#include "Callback.h"
+#include "datetime/Timestamp.h"
 
-
+namespace muduo
+{
 
 class EventLoop;
 class Channel;
+class TimerId;
 
 class TimerQueue : boost::noncopyable
 {
@@ -16,10 +20,15 @@ class TimerQueue : boost::noncopyable
         TimerQueue(EventLoop* loop);        
         ~TimerQueue();
 
-
+    TimerId addTimer(const TimerCallback& cb,
+                     Timestamp when,
+                     double interval);l
 
 
     private:
+        bool insert(Timer * timer);
+        void reset
+
         typedef std::pair<Timestamp, Timer*> Entry; 
         typedef std::set<Entry> TimerList;
 
@@ -28,5 +37,7 @@ class TimerQueue : boost::noncopyable
         Channel timerfdChannel_; 
         TimerList timers_;        
 };
+
+}// muduo
 
 #endif
