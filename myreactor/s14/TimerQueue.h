@@ -27,7 +27,8 @@ class TimerQueue : boost::noncopyable
 
     private:
         bool insert(Timer * timer);
-        void reset
+
+        void handleRead();
 
         typedef std::pair<Timestamp, Timer*> Entry; 
         typedef std::set<Entry> TimerList;
