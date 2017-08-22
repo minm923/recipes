@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "EPoller.h"
 #include "Channel.h"
+#include "TimerQueue.h"
+
 
 using namespace muduo;
 
@@ -13,7 +15,8 @@ EventLoop::EventLoop()
     : looping_(false),
       quit_(false),
       threadId_(CurrentThread::tid()),
-      poller_(new EPoller(this))  
+      poller_(new EPoller(this)),
+      timerQueue_(new TimerQueue(this))
 {
     LOG_TRACE << "EventLoop created " << this  << " in thread " << threadId_;
     if (t_loopInThisThread)
@@ -41,7 +44,7 @@ void EventLoop::loop()
     while(!quit_)
     {
         activeChannels_.clear();        
-        poller_->poll(kPollTimeMs, &activeChannels_);        
+        pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_);        
         for (ChannelList::iterator it = activeChannels_.begin();
             it != activeChannels_.end(); ++it)
         {
@@ -64,9 +67,29 @@ void EventLoop::updateChannel(Channel* channel)
     assert(channel->ownerLoop() == this);
     poller_->updateChannel(channel);    
 }
+
 void EventLoop::abortNotInLoopThread()
 {
     LOG_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
               << " was created in threadId_ = " << threadId_
               << ", current thread id = " << CurrentThread::tid();
+}
+
+TimerId EventLoop::runAt(const Timestamp& time, const TimerCallback& cb)
+{
+    return timerQueue_->addTimer(cb, time, 0);                
+}
+
+TimerId EventLoop::runAfter(double delay, const TimerCallback& cb)
+{
+    Timestamp now(Timestamp::now());
+    Timestamp when = addTime(now, delay);
+    return runAt(when, cb);
+}
+TimerId EventLoop::runEvery(double interval, const TimerCallback& cb)
+{
+    Timestamp now(Timestamp::now());
+    Timestamp when = addTime(now, interval);
+ 
+    return timerQueue_->addTimer(cb, when, interval);
 }
