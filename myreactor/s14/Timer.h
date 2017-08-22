@@ -3,14 +3,16 @@
 
 #include <boost/noncopyable.hpp>
 #include "Callback.h"
+#include "datetime/Timestamp.h"
 
 namespace muduo
 {
 
+
 class Timer : boost::noncopyable
 {
-
-    explicit Timer(TimerCallback& cb, Timestamp when, double interval)
+public:
+    explicit Timer(const TimerCallback& cb, Timestamp when, double interval)
         : callback_(cb),
           expiration_(when),
           interval_(interval),
@@ -22,7 +24,7 @@ class Timer : boost::noncopyable
         callback_();            
     }
 
-    Timestamp expiration() const { return expiration; }
+    Timestamp expiration() const { return expiration_; }
 
     bool repeat() const { return repeat_; }
 
@@ -35,5 +37,5 @@ class Timer : boost::noncopyable
         bool   repeat_;
 };
 
-}
+}// muduo
 #endif

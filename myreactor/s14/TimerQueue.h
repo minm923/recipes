@@ -6,13 +6,14 @@
 #include <vector>
 #include "Callback.h"
 #include "datetime/Timestamp.h"
+#include "Channel.h"
 
 namespace muduo
 {
 
 class EventLoop;
-class Channel;
 class TimerId;
+class Timer;
 
 class TimerQueue : boost::noncopyable
 {
@@ -22,7 +23,7 @@ class TimerQueue : boost::noncopyable
 
     TimerId addTimer(const TimerCallback& cb,
                      Timestamp when,
-                     double interval);l
+                     double interval);
 
 
     private:

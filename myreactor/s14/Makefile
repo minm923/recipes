@@ -1,10 +1,8 @@
-LIB_SRC = EventLoop.cc Channel.cc EPoller.cc
-BINARIES = test1 test2 test3
+LIB_SRC = Channel.cc  EPoller.cc  EventLoop.cc  Timer.cc  TimerQueue.cc        
+BINARIES = test4
 
 all: $(BINARIES)
 
 include ../reactor.mk
 
-test1: test1.cc
-test2: test2.cc
-test3: test3.cc
+test4: test4.cc

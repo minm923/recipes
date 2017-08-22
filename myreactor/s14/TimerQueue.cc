@@ -1,12 +1,15 @@
-#include <EventLoop.h>
+#define __STDC_LIMIT_MACROS
+#include "EventLoop.h"
 #include "TimerQueue.h"
 #include "Timer.h"
 #include <sys/timerfd.h>
 #include "TimerId.h"
+#include <boost/bind.hpp>
+#include "logging/Logging.h"
+
 
 namespace muduo
 {
-
 namespace detail
 {
 
@@ -60,7 +63,7 @@ void readTimerfd(int timerfd, Timestamp now)
     LOG_TRACE << "TimerQueue::handleRead()" << howmany << " at" << now.toString();
     if (n != sizeof howmany)
     {
-        LOG_ERR << "TimerQueue::handleRead() reads" << n << " bytes instead of 8";
+        LOG_SYSERR << "TimerQueue::handleRead() reads" << n << " bytes instead of 8";
     }
 }
 
@@ -78,7 +81,9 @@ TimerQueue::TimerQueue(EventLoop * loop)
       timerfdChannel_(loop, timerfd_),
       timers_()
 {
-    timerfdChannel_.setReadCallback();
+    timerfdChannel_.setReadCallback(
+            boost::bind(&TimerQueue::handleRead, this));
+
     timerfdChannel_.enableReading();
 }
 
@@ -86,8 +91,8 @@ TimerQueue::~TimerQueue()
 {
     ::close(timerfd_);
 
-    for (TimerList::iterator it  = timerfd_.begin();
-        it != timerfd_.end();++it)    
+    for (TimerList::iterator it  = timers_.begin();
+        it != timers_.end();++it)    
     {
         delete it->second;                
     }
@@ -118,9 +123,10 @@ bool TimerQueue::insert(Timer * timer)
     }
 
     std::pair<TimerList::iterator, bool> result = 
-        timers_.insert(std::make_pair<when, timer>);
+        timers_.insert(std::make_pair(when, timer));
 
-    assert(result->second);    
+    assert(result.second);    
+
     return earlistChanged;
 }
 
@@ -142,6 +148,7 @@ void TimerQueue::handleRead()
     }
     
     // 重置定时器
+    reset(expired, now);    
 }
 
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
@@ -158,7 +165,7 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
 
 void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now)
 {
-    for (std::vector<Entry>::iterator it = expired.begin();
+    for (std::vector<Entry>::const_iterator it = expired.begin();
         it != expired.end(); ++it)
     {
         if (it->second->repeat())
