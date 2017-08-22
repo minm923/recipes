@@ -70,6 +70,7 @@ void readTimerfd(int timerfd, Timestamp now)
 
 
 using namespace muduo;
+using namespace muduo::detail;
 
 TimerQueue::TimerQueue(EventLoop * loop)
     : loop_(loop),    
@@ -127,13 +128,20 @@ void TimerQueue::handleRead()
 {
     loop_->assertInLoopThread();
     Timestamp now(Timestamp::now());
+
     readTimerfd(timerfd_, now);
 
+    // 获得到期定时器
     std::vector<Entry> expired = getExpired(now);
 
-    //回调
-
-    //重置定时器
+    // 回调
+    for (std::vector<Entry>::iterator it = expired.begin();
+        it != expired.end(); ++it)
+    {
+        it->second->run();
+    }
+    
+    // 重置定时器
 }
 
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
@@ -146,4 +154,32 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
     timers_.erase(timers_.begin(), it);
     
     return expired;
+}
+
+void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now)
+{
+    for (std::vector<Entry>::iterator it = expired.begin();
+        it != expired.end(); ++it)
+    {
+        if (it->second->repeat())
+        {
+            it->second->restart(now);
+            insert(it->second);
+        }
+        else
+        {
+            delete it->second;            
+        }
+    }
+    
+    Timestamp nextExpire;     
+    if (!timers_.empty())
+    {
+        nextExpire = timers_.begin()->first;
+    }
+
+    if (nextExpire.valid())
+    {
+        resetTimerfd(timerfd_, nextExpire);
+    }
 }

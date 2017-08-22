@@ -75,8 +75,8 @@ void resetTimerfd(int timerfd, Timestamp expiration)
   }
 }
 
-}
-}
+}// detail
+}// muduo
 
 using namespace muduo;
 using namespace muduo::detail;
