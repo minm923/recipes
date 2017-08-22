@@ -50,13 +50,20 @@ private:
     
     void abortNotInLoopThread();
 
+    void handleRead();
+
     bool looping_;    
     bool quit_;
     const pid_t threadId_;
     boost::scoped_ptr<EPoller> poller_;
     boost::scoped_ptr<TimerQueue> timerQueue_;
+    int wakeupFd_;
+    boost::scoped_ptr<Channel> wakeupChannel_;
+
     ChannelList activeChannels_;
     Timestamp pollReturnTime_;
+    MutexLock mutex_;
+    std::vector<Functor> pendingFunctors;
 };
 
 }
