@@ -129,6 +129,21 @@ void TimerQueue::handleRead()
     Timestamp now(Timestamp::now());
     readTimerfd(timerfd_, now);
 
-    // 开始处理过期定时器
+    std::vector<Entry> expired = getExpired(now);
 
+    //回调
+
+    //重置定时器
+}
+
+std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
+{
+    std::vector<Entry> expired;
+    Entry sentry = std::make_pair(now, reinterpret_cast<Timer*>(UINTPTR_MAX));
+    TimerList::iterator it = timers_.lower_bound(sentry);
+    assert(it == timers_.end() || now < it->first);
+    std::copy(timers_.begin(), it, back_inserter(expired));
+    timers_.erase(timers_.begin(), it);
+    
+    return expired;
 }

@@ -26,12 +26,13 @@ class TimerQueue : boost::noncopyable
 
 
     private:
+        typedef std::pair<Timestamp, Timer*> Entry; 
+        typedef std::set<Entry> TimerList;
+
         bool insert(Timer * timer);
 
         void handleRead();
-
-        typedef std::pair<Timestamp, Timer*> Entry; 
-        typedef std::set<Entry> TimerList;
+        std::vector<Entry> getExpired(Timestamp now);
 
         EventLoop * loop_;
         const int timerfd_;
