@@ -45,6 +45,12 @@ public:
 
     TimerId runEvery(double interval, const TimerCallback& cb);
 
+    void runInLoop(const Functor& cb);
+
+    void queueInLoop(const Functor& cb);
+
+    void wakeup();
+
 private:    
     typedef std::vector<Channel*> ChannelList;
     
@@ -52,8 +58,12 @@ private:
 
     void handleRead();
 
+    void doPendingFunctors();
+
+
     bool looping_;    
     bool quit_;
+    bool callingPendingFunctors_;
     const pid_t threadId_;
     boost::scoped_ptr<EPoller> poller_;
     boost::scoped_ptr<TimerQueue> timerQueue_;

@@ -11,12 +11,29 @@ using namespace muduo;
 __thread EventLoop* t_loopInThisThread = NULL;
 const int kPollTimeMs = 10000;
 
+static int createEventFd()
+{
+    int evtFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+
+    if (evtFd < 0)
+    {
+        LOG_SYSERR << "Failed in eventfd";
+        abort();
+    }
+
+    return evtFd;
+}
+
+
 EventLoop::EventLoop()
     : looping_(false),
       quit_(false),
+      callingPendingFunctors_(false),
       threadId_(CurrentThread::tid()),
       poller_(new EPoller(this)),
-      timerQueue_(new TimerQueue(this))
+      timerQueue_(new TimerQueue(this)),
+      wakeupFd_(createEventFd()),
+      wakeupChannel_(new Channel(this, wakeupFd_))
 {
     LOG_TRACE << "EventLoop created " << this  << " in thread " << threadId_;
     if (t_loopInThisThread)
@@ -27,6 +44,10 @@ EventLoop::EventLoop()
     {
         t_loopInThisThread = this;    
     }
+
+    wakeupChannel_->setReadCallback(
+            boost::bind(&EventLoop::handleRead, this));
+    wakeupChannel_->enableReading();    
 }
 
 EventLoop::~EventLoop()
@@ -50,6 +71,7 @@ void EventLoop::loop()
         {
             (*it)->handleEvent();
         }
+        doPendingFunctors();
     }
 
     LOG_TRACE << "EventLoop" << this << "stop looping";
@@ -98,5 +120,53 @@ TimerId EventLoop::runEvery(double interval, const TimerCallback& cb)
 void EventLoop::handleRead()
 {
 
+
+}
+
+void EventLoop::doPendingFunctors()
+{
+    std::vector<Functor> functors;
+    callingPendingFunctors_ = true;
+
+    {
+        MutexLockGuard lock(mutex_);        
+        functors.swap(pendingFunctors);
+    }
+
+    for (size_t i = 0; i < functors.size(); ++i)
+    {
+        functors[i]();
+    }
+
+    callingPendingFunctors_ = false;
+}
+
+void EventLoop::runInLoop(const Functor& cb)
+{
+    if (isInLoopThread())
+    {
+        cb();
+    }
+    else
+    {
+        queueInLoop(cb);
+    }
+}
+
+void EventLoop::queueInLoop(const Functor& cb)
+{
+    {
+        MutexLockGuard lock(mutex_);        
+        pendingFunctors.push_back(cb);
+    }
+
+    if (!isInLoopThread() || callingPendingFunctors_)
+    {
+        wakeup();
+    }
+}
+
+void EventLoop::wakeup()
+{
 
 }
