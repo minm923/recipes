@@ -8,6 +8,7 @@
 #include "datetime/Timestamp.h"
 #include "Callback.h"
 #include "TimerId.h"
+#include <thread/Mutex.h>
 
 namespace muduo
 {

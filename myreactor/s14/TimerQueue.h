@@ -36,6 +36,8 @@ class TimerQueue : boost::noncopyable
         std::vector<Entry> getExpired(Timestamp now);
         void reset(const std::vector<Entry>& expired, Timestamp now);                
 
+        void addTimerInLoop(Timer* timer);                
+
         EventLoop * loop_;
         const int timerfd_;
         Channel timerfdChannel_; 

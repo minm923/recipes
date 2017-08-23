@@ -1,27 +1,44 @@
+// copied from muduo/net/tests/TimerQueue_unittest.cc
+
 #include "EventLoop.h"
+
+#include <boost/bind.hpp>
+
 #include <stdio.h>
 
-void func1()
+int cnt = 0;
+muduo::EventLoop* g_loop;
+
+void printTid()
 {
-    printf("func1....\n");
+  printf("pid = %d, tid = %d\n", getpid(), muduo::CurrentThread::tid());
+  printf("now %s\n", muduo::Timestamp::now().toString().c_str());
 }
 
-void func2()
+void print(const char* msg)
 {
-    printf("func2....\n");
+  printf("msg %s %s\n", muduo::Timestamp::now().toString().c_str(), msg);
+  if (++cnt == 20)
+  {
+    g_loop->quit();
+  }
 }
 
-
-
-int main(int argc, char* argv[])
+int main()
 {
-    muduo::EventLoop loop;
+  printTid();
+  muduo::EventLoop loop;
+  g_loop = &loop;
 
-    loop.runAfter(5.0, func1);
-    loop.runEvery(2.0, func2);
-    loop.loop();
+  print("main");
+  loop.runAfter(1, boost::bind(print, "once1"));
+  loop.runAfter(1.5, boost::bind(print, "once1.5"));
+  loop.runAfter(2.5, boost::bind(print, "once2.5"));
+  loop.runAfter(3.5, boost::bind(print, "once3.5"));
+  loop.runEvery(2, boost::bind(print, "every2"));
+  loop.runEvery(3, boost::bind(print, "every3"));
 
-
-
-    return 0;    
+  loop.loop();
+  print("main loop exits");
+  sleep(1);
 }

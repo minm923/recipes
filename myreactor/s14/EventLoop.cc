@@ -4,6 +4,8 @@
 #include "EPoller.h"
 #include "Channel.h"
 #include "TimerQueue.h"
+#include <boost/bind.hpp>
+#include <sys/eventfd.h>
 
 
 using namespace muduo;
@@ -71,6 +73,7 @@ void EventLoop::loop()
         {
             (*it)->handleEvent();
         }
+
         doPendingFunctors();
     }
 
@@ -81,6 +84,11 @@ void EventLoop::loop()
 void EventLoop::quit()
 {
     quit_ = true;
+
+    if (!isInLoopThread())
+    {
+        wakeup();                
+    }
 }
 
 void EventLoop::updateChannel(Channel* channel)
@@ -119,8 +127,12 @@ TimerId EventLoop::runEvery(double interval, const TimerCallback& cb)
 
 void EventLoop::handleRead()
 {
-
-
+    uint64_t one = 1;
+    ssize_t n = ::read(wakeupFd_, &one , sizeof one);
+    if (n != sizeof one)
+    {
+        LOG_ERROR << "EventLoop::handleRead() reads" << n << "bytes instead of 8";
+    }
 }
 
 void EventLoop::doPendingFunctors()
@@ -168,5 +180,10 @@ void EventLoop::queueInLoop(const Functor& cb)
 
 void EventLoop::wakeup()
 {
-
+    uint64_t one = 1;
+    ssize_t n = ::write(wakeupFd_, &one , sizeof one);
+    if (n != sizeof one)
+    {
+        LOG_ERROR << "EventLoop::handleRead() reads" << n << "bytes instead of 8";
+    }
 }
