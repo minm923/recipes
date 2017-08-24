@@ -8,7 +8,7 @@ void newconnection(int fd, const muduo::InetAddress& peerAddr)
 {
     printf("new connection from  %s",peerAddr.toHostPort().c_str());
     ::write(fd, "how r u?\n", 9);        
-    muduo::sockets::close(fd);
+    //muduo::sockets::close(fd);
 }
 
 int main(int argc, char* argv[])
