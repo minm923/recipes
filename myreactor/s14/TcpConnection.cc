@@ -3,6 +3,8 @@
 #include <assert.h>
 #include "Socket.h"
 #include "Channel.h"
+#include "EventLoop.h"
+#include "logging/Logging.h"
 
 using namespace muduo;
 
@@ -10,7 +12,7 @@ using namespace muduo;
 
 TcpConnection::TcpConnection(EventLoop* loop,
                              const std::string& name,
-                             const int sockfd,
+                             int sockfd,
                              const InetAddress& localAddr,
                              const InetAddress& peerAddr)
     : loop_(loop),    
@@ -18,8 +20,8 @@ TcpConnection::TcpConnection(EventLoop* loop,
       state_(kConnecting),
       socket_(new Socket(sockfd)),
       channel_(new Channel(loop_, sockfd)),
-      localAddr_(localAddr_),
-      peerAddr_(peerAddr_)
+      localAddr_(localAddr),
+      peerAddr_(peerAddr)
 {
     LOG_DEBUG << "TcpConnection::ctor [ " << name_ << "] at " << this
               << " fd = " << sockfd;

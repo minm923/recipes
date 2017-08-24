@@ -35,7 +35,7 @@ void TcpServer::start()
 
     if (!acceptor_->listenning())
     {
-        loop_->runInLoop(boost::bind(&Acceptor::listen(), acceptor_.get()));
+        loop_->runInLoop(boost::bind(&Acceptor::listen, get_pointer(acceptor_)));
     }
 }
 

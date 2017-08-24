@@ -6,12 +6,15 @@
 #include "InetAddress.h"
 #include "Callback.h"
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/noncopyable.hpp>
 
 
 namespace muduo
 {
 
 class EventLoop;    
+class Socket;
+class Channel;
 
 class TcpConnection : boost::noncopyable,
                       public boost::enable_shared_from_this<TcpConnection>    
@@ -51,8 +54,8 @@ private:
     StateE state_;
     boost::scoped_ptr<Socket> socket_;
     boost::scoped_ptr<Channel> channel_;
-    InetAddress localAddr_;
-    InetAddress peerAddr_;
+    const InetAddress localAddr_;
+    const InetAddress peerAddr_;
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
 };
