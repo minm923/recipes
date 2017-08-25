@@ -38,8 +38,13 @@ public:
 
     void connectEstablished();
 
+    const std::string& name() const { return name_; }
 
+    bool connected() const { return state_ == kConnected ;}
 
+    const InetAddress& localAddress() { return localAddr_;}
+
+    const InetAddress& peerAddress() { return peerAddr_;}
 
 private:
     enum StateE { kConnecting, kConnected, };
