@@ -11,17 +11,25 @@ const int Channel::kReadEvent  = POLLIN | POLLPRI | POLLRDHUP;
 const int Channel::kWriteEvent = POLLOUT;
 
 Channel::Channel(EventLoop* loop, int fd)
-    : loop_(loop),    
-      fd_(fd),      
-      events_(0),        
+    : loop_(loop),
+      fd_(fd),
+      events_(0),
       revents_(0),
-      index_(-1)
+      index_(-1),
+      eventHandling_(false)
 {
 
 }
 
+Channel::~Channel()
+{
+    assert(!eventHandling_);
+}
+
 void Channel::handleEvent()
 {
+    eventHandling_ = true;
+
     if (revents_ & POLLNVAL)
     {
         LOG_WARN <<"Channel::handle_event() POLLNVAL";               
@@ -41,6 +49,8 @@ void Channel::handleEvent()
     {
         if (errorCallback_) errorCallback_();
     }
+
+    eventHandling_ = false;
 }
 
 void Channel::update()

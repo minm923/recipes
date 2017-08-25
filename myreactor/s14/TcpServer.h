@@ -8,7 +8,6 @@
 #include <map>
 #include "InetAddress.h"
 
-
 namespace muduo
 {
 
@@ -47,7 +46,5 @@ private:
 };
 
 }
-
-
 
 #endif

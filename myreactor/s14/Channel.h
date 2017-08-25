@@ -52,6 +52,8 @@ private:
     int revents_;
     int index_;// used by EPoller
 
+    bool eventHandling_;
+
     EventCallback readCallback_;
     EventCallback writeCallback_;
     EventCallback errorCallback_;

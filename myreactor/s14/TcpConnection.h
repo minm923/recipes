@@ -36,7 +36,14 @@ public:
     void setMessageCallback(const MessageCallback& cb)
     { messageCallback_ = cb; }
 
+    // Internal use only
+    void setCloseCallback(const CloseCallback& cb)    
+    { closeCallback_ = cb; }
+    
     void connectEstablished();
+
+    // called when TcpServer has removed me from its map
+    void connectDestroyed();
 
     const std::string& name() const { return name_; }
 
@@ -54,6 +61,12 @@ private:
 
     void handleRead();
 
+    void handleWrite();
+
+    void handleClose();
+    
+    void handleError();
+
     EventLoop* loop_;
     std::string name_;
     StateE state_;
@@ -63,6 +76,7 @@ private:
     const InetAddress peerAddr_;
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
+    CloseCallback   closeCallback_;
 };
 
 }
