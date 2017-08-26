@@ -5,10 +5,9 @@
 #include "Channel.h"
 #include "EventLoop.h"
 #include "logging/Logging.h"
+#include "SocketsOps.h"
 
 using namespace muduo;
-
-
 
 TcpConnection::TcpConnection(EventLoop* loop,
                              const std::string& name,
@@ -62,4 +61,30 @@ void TcpConnection::handleRead()
     {
         handleError();        
     }
+}
+
+void TcpConnection::handleClose()
+{
+    loop_->assertInLoopThread();    
+    LOG_TRACE << "TcpConnection::handleClose state = " << state_;
+    assert(kConnected == state_);
+    channel_->disableAll();
+    closeCallback_(shared_from_this());        
+}
+
+void TcpConnection::handleError()
+{
+    int err = sockets::getSocketError(socket_->fd());
+    LOG_ERROR << "TcpConnection::handleError [" << name_
+            << "] - SO_ERROR = " << err << " " << strerror_tl(err);
+}
+
+void TcpConnection::connectDestroyed()
+{
+    loop_->assertInLoopThread();    
+    assert(kConnected == state_);
+    setState(kDisconnected);        
+    channel_->disableAll();
+
+    loop_->removeChannel(get_pointer(channel_));
 }

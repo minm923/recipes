@@ -16,6 +16,7 @@ public:
     typedef boost::function<void ()> EventCallback;
 
     Channel(EventLoop* loop, int fd);
+    ~Channel();
 
     void setReadCallback(const EventCallback& cb)
     { readCallback_ = cb; }
@@ -38,6 +39,8 @@ public:
     bool isNoneEvent() { return events_ == kNoneEvent; }
 
     void enableReading() { events_ |= kReadEvent; update(); }
+
+    void disableAll() { events_ = kNoneEvent; update();}
 private:
 
     void update();

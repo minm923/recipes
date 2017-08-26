@@ -52,6 +52,7 @@ public:
 
     void wakeup();
 
+    void removeChannel(Channel* channel);
 private:    
     typedef std::vector<Channel*> ChannelList;
     

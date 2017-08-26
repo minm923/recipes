@@ -54,7 +54,7 @@ public:
     const InetAddress& peerAddress() { return peerAddr_;}
 
 private:
-    enum StateE { kConnecting, kConnected, };
+    enum StateE { kConnecting, kConnected, kDisconnected, };
 
     void setState(StateE e)
     { state_ = e; }

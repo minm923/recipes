@@ -187,3 +187,10 @@ void EventLoop::wakeup()
         LOG_ERROR << "EventLoop::handleRead() reads" << n << "bytes instead of 8";
     }
 }
+
+void EventLoop::removeChannel(Channel* channel)
+{
+    assert(channel->ownerLoop() == this);
+    assertInLoopThread();
+    poller_->removeChannel(channel);
+}
