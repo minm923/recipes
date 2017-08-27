@@ -2,6 +2,7 @@
 #define MUDUO_NET_CALLBACK_H
 
 #include <boost/function.hpp>
+#include "datetime/Timestamp.h"
 
 namespace muduo
 {
@@ -10,15 +11,17 @@ typedef boost::function<void ()> TimerCallback;
 typedef boost::function<void ()> Functor;
 
 // client use 
+class Buffer;
 class TcpConnection;
 
 typedef boost::shared_ptr<TcpConnection> TcpConnectionPtr;
 typedef boost::function<void (const TcpConnectionPtr&)> ConnectionCallback;
 typedef boost::function<void (const TcpConnectionPtr&,
-                              const char* data,
-                              ssize_t len)> MessageCallback;
+                              Buffer* ,
+                              Timestamp)> MessageCallback;
 
 typedef boost::function<void (const TcpConnectionPtr&)> CloseCallback;
+
 
 }
 
