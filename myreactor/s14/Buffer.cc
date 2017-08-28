@@ -6,7 +6,7 @@
 using namespace muduo;
 
 
-ssize_tBuffer::readFd(int fd, int* savedErrno)
+ssize_t Buffer::readFd(int fd, int* savedErrno)
 {
     char extrabuf[65536];
     struct iovec vec[2];

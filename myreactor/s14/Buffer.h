@@ -34,7 +34,7 @@ public:
         std::swap(writerIndex_, rhs.writerIndex_);
     }
 
-    void readFd(int fd, int* savedErrno);
+    ssize_t readFd(int fd, int* savedErrno);
 
 
     size_t writableBytes()
@@ -76,7 +76,7 @@ public:
         writerIndex_ = kCheapPrepend;
     }
 
-    std::string retrieveAsString()    
+    std::string retrieveAsString()
     {
         std::string str(peek(), readableBytes());
         retrieveAll();
@@ -93,12 +93,44 @@ public:
         return begin() + writerIndex_;
     }
 
+    void append(std::string& str)
+    {
+        append(str.data(), str.size());
+    }
+
+    void append(const void* data, size_t len)
+    {
+        append(static_cast<const char*>(data), len);        
+    }
 
     void append(const char* data, size_t len)
     {
-        ensureWritableBytes(len);                        
+        ensureWritableBytes(len);
         std::copy(data, data+len, beginWrite());
-        hasWritten(len);        
+        hasWritten(len);
+    }
+
+    void hasWritten(size_t len)
+    {
+        writerIndex_ += len;
+    }
+
+    void prepend(const void* data, size_t len)
+    {
+        assert(len <= prependableBytes());
+        readerIndex_ -= len;
+        const char* data = static_cast<const char*>(data);
+        std::copy(data, data+len, begin()+readerIndex_);
+    }
+
+    void shrink(size_t reserve)
+    {
+        size_t readable = readableBytes();
+        std::vector<char> buf(kCheapPrepend+readable+reserve);
+        std::copy(peek(), readable, buf.begin()+kCheapPrepend);
+        buf.swap(buffer_);
+        readerIndex_ = kCheapPrepend;
+        writerIndex_ = readerIndex_ + readableBytes;
     }
 
 private:    
