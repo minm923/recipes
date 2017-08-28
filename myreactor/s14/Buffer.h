@@ -162,7 +162,7 @@ private:
         }
     }
 
-    char* begin()
+    const char* begin() const 
     {
         return &*buffer_.begin();
     }

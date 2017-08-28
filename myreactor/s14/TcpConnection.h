@@ -7,6 +7,7 @@
 #include "Callback.h"
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
+#include "Buffer.h"
 
 
 namespace muduo
@@ -59,7 +60,7 @@ private:
     void setState(StateE e)
     { state_ = e; }
 
-    void handleRead();
+    void handleRead(Timestamp receiveTime);
 
     void handleWrite();
 
@@ -77,6 +78,7 @@ private:
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
     CloseCallback   closeCallback_;
+    Buffer inputBuffer_;
 };
 
 }
