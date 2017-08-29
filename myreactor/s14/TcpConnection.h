@@ -54,8 +54,13 @@ public:
 
     const InetAddress& peerAddress() { return peerAddr_;}
 
+    // s08 add
+    void send(const std::string& message);
+
+    void shutdown();
+
 private:
-    enum StateE { kConnecting, kConnected, kDisconnected, };
+    enum StateE { kConnecting, kConnected, kDisconnecting, kDisconnected, };
 
     void setState(StateE e)
     { state_ = e; }
@@ -68,6 +73,11 @@ private:
     
     void handleError();
 
+    // s08 add
+    void sendInLoop(const std::string& message);
+
+    void shutdownInLoop();
+
     EventLoop* loop_;
     std::string name_;
     StateE state_;
@@ -79,6 +89,7 @@ private:
     MessageCallback messageCallback_;
     CloseCallback   closeCallback_;
     Buffer inputBuffer_;
+    Buffer outputBuffer_;
 };
 
 }

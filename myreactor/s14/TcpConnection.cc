@@ -88,3 +88,4 @@ void TcpConnection::connectDestroyed()
 
     loop_->removeChannel(get_pointer(channel_));
 }
+
