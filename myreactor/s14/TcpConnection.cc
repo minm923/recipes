@@ -89,3 +89,21 @@ void TcpConnection::connectDestroyed()
     loop_->removeChannel(get_pointer(channel_));
 }
 
+void TcpConnection::shutdown()
+{
+    if (kConnected == state_)
+    {
+        setState(kDisconnecting);
+        loop_->runInLoop(boost::bind(&TcpConnection::shutdownInLoop, this));
+    }
+}
+
+void TcpConnection::shutdownInLoop()
+{
+    loop_->assertInLoopThread();
+    if (!channel_->isWriting())
+    {
+        socket_->shutdownWrite();// 设置了状态 在handleWrite()的之后判断状态 来关闭
+    }
+}
+

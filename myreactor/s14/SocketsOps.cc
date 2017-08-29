@@ -186,10 +186,18 @@ int sockets::getSocketError(int sockfd)
 
     if (::getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
     {
-        return errno;        
+        return errno;
     }
     else
     {
         return optval;
+    }
+}
+
+void sockets::shutdownWrite(int sockfd)
+{
+    if (::shutdown(sockfd, SHUT_WR) < 0)
+    {
+        LOG_SYSERR << "sockets::shudownWrite";
     }
 }
