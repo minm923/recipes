@@ -37,8 +37,8 @@ Timestamp EPoller::poll(int timeoutMs, ChannelList* activeChannels)
                                  static_cast<int>(events_.size()),
                                  timeoutMs);    
 
-    Timestamp  n;
-    n.now();
+    Timestamp  n(Timestamp::now());
+    
     if (numEvents > 0)
     {
         LOG_TRACE << numEvents << "events happended";

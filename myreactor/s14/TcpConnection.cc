@@ -26,7 +26,7 @@ TcpConnection::TcpConnection(EventLoop* loop,
     LOG_DEBUG << "TcpConnection::ctor [ " << name_ << "] at " << this
               << " fd = " << sockfd;
     channel_->setReadCallback(
-        boost::bind(&TcpConnection::handleRead, this));
+        boost::bind(&TcpConnection::handleRead, this, _1));
 }
 
 TcpConnection::~TcpConnection()

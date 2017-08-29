@@ -20,11 +20,17 @@ void connectionCallback(const muduo::TcpConnectionPtr& conn)
     }
 }
 
-void messageCallback(const muduo::TcpConnectionPtr& conn, const char* data, ssize_t len)
+void messageCallback2(const muduo::TcpConnectionPtr& conn, const char* data, ssize_t len)
 {
     printf("message : %s\n", data);
 }
 
+void messageCallback(const muduo::TcpConnectionPtr& conn, muduo::Buffer* data, muduo::Timestamp receiveTime)
+{
+    printf("message : %s\n", data->retrieveAsString().c_str());
+    printf("receive time: %s\n", receiveTime.toString().c_str());
+    printf("receive time: %s\n", receiveTime.toFormattedString().c_str());
+}
 
 int main(int argc, char * argv[])
 {

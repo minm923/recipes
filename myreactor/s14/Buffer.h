@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <algorithm>
 #include <string>
+#include "logging/Logging.h"
 
 namespace muduo
 {
@@ -119,18 +120,18 @@ public:
     {
         assert(len <= prependableBytes());
         readerIndex_ -= len;
-        const char* data = static_cast<const char*>(data);
-        std::copy(data, data+len, begin()+readerIndex_);
+        const char* d = static_cast<const char*>(data);
+        std::copy(d, d+len, begin()+readerIndex_);
     }
 
     void shrink(size_t reserve)
     {
         size_t readable = readableBytes();
         std::vector<char> buf(kCheapPrepend+readable+reserve);
-        std::copy(peek(), readable, buf.begin()+kCheapPrepend);
+        std::copy(peek(), peek()+readable, buf.begin()+kCheapPrepend);
         buf.swap(buffer_);
         readerIndex_ = kCheapPrepend;
-        writerIndex_ = readerIndex_ + readableBytes;
+        writerIndex_ = readerIndex_ + readable;
     }
 
 private:    
@@ -166,6 +167,12 @@ private:
     {
         return &*buffer_.begin();
     }
+
+    char* begin() 
+    {
+        return &*buffer_.begin();
+    }
+
 
 private:    
     std::vector<char> buffer_;    
