@@ -179,7 +179,7 @@ void TcpConnection::sendInLoop(const std::string& message)
         {
             if (implicit_cast<size_t>(nwrite) < message.size())
             {
-                LOG_TRACE << "I am going to write more data...";
+                LOG_DEBUG << "I am going to write more data..." << (message.size()-nwrite);
             }
         }
         else
