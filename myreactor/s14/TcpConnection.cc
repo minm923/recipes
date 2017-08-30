@@ -67,7 +67,7 @@ void TcpConnection::handleClose()
 {
     loop_->assertInLoopThread();    
     LOG_TRACE << "TcpConnection::handleClose state = " << state_;
-    assert(kConnected == state_);
+    assert(kConnected == state_ || kDisconnecting == state_);
     channel_->disableAll();
     closeCallback_(shared_from_this());        
 }
@@ -82,9 +82,10 @@ void TcpConnection::handleError()
 void TcpConnection::connectDestroyed()
 {
     loop_->assertInLoopThread();    
-    assert(kConnected == state_);
+    assert(kConnected == state_ || kDisconnecting == state_ );
     setState(kDisconnected);        
     channel_->disableAll();
+    connectionCallback_(shared_from_this());
 
     loop_->removeChannel(get_pointer(channel_));
 }
@@ -107,3 +108,23 @@ void TcpConnection::shutdownInLoop()
     }
 }
 
+void TcpConnection::send(const std::string& message)
+{
+    if (kConnected == state_)
+    {
+        if (loop_->isInLoopThread())
+        {
+            sendInLoop(message);
+        }
+        else
+        {
+            loop_->sendInLoop(
+                boost::bind(&TcpConnection::sendInLoop, this, message));
+        }
+    }
+}
+
+void TcpConnection::sendInLoop(const std::string& message)
+{
+    loop_->assertInLoopThread();
+}

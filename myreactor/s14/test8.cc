@@ -16,7 +16,7 @@ void connectionCallback(const muduo::TcpConnectionPtr& conn)
     }
     else
     {
-
+        printf("down,,,\n");
     }
 }
 
