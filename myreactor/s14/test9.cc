@@ -4,6 +4,7 @@
 #include "TcpConnection.h"
 #include <stdio.h>
 #include "Callback.h"
+#include <string>
 
 
 void connectionCallback(const muduo::TcpConnectionPtr& conn)
@@ -27,9 +28,12 @@ void messageCallback2(const muduo::TcpConnectionPtr& conn, const char* data, ssi
 
 void messageCallback(const muduo::TcpConnectionPtr& conn, muduo::Buffer* data, muduo::Timestamp receiveTime)
 {
-    printf("message : %s\n", data->retrieveAsString().c_str());
+    std::string message(data->retrieveAsString());
+    printf("message : %s\n", message.c_str());
     printf("receive time: %s\n", receiveTime.toString().c_str());
     printf("receive time: %s\n", receiveTime.toFormattedString().c_str());
+
+    conn->send(message);
 }
 
 int main(int argc, char * argv[])
