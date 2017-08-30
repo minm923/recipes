@@ -8,6 +8,8 @@
 #include "SocketsOps.h"
 #include "Buffer.h"
 
+#include <errno.h>
+
 using namespace muduo;
 
 TcpConnection::TcpConnection(EventLoop* loop,
@@ -27,6 +29,12 @@ TcpConnection::TcpConnection(EventLoop* loop,
               << " fd = " << sockfd;
     channel_->setReadCallback(
         boost::bind(&TcpConnection::handleRead, this, _1));
+    channel_->setWriteCallback(
+        boost::bind(&TcpConnection::handleWrite, this));
+    channel_->setCloseCallback(
+        boost::bind(&TcpConnection::handleClose, this));
+    channel_->setErrorCallback(
+        boost::bind(&TcpConnection::handleError, this));
 }
 
 TcpConnection::~TcpConnection()
@@ -79,6 +87,41 @@ void TcpConnection::handleError()
             << "] - SO_ERROR = " << err << " " << strerror_tl(err);
 }
 
+void TcpConnection::handleWrite()
+{
+    loop_->assertInLoopThread();
+    if (channel_->isWriting())
+    {
+        ssize_t n = ::write(channel_->fd(),
+                            outputBuffer_.peek(),
+                            outputBuffer_.readableBytes());
+        if (n >= 0)
+        {
+            outputBuffer_.retrieve(n);
+            if (0 == outputBuffer_.readableBytes())
+            {
+                channel_->disableWriting();
+                if (kDisconnecting == state_)
+                {
+                    shutdownInLoop();                    
+                }
+            }
+            else
+            {
+                LOG_TRACE << "I am going to write more data";
+            }
+        }
+        else
+        {
+            LOG_SYSERR << "TcpConnection::handleWrite";
+        }
+    }
+    else
+    {
+        LOG_TRACE << "TcpConnection is down, no more writing";
+    }
+}
+
 void TcpConnection::connectDestroyed()
 {
     loop_->assertInLoopThread();    
@@ -118,7 +161,7 @@ void TcpConnection::send(const std::string& message)
         }
         else
         {
-            loop_->sendInLoop(
+            loop_->runInLoop(
                 boost::bind(&TcpConnection::sendInLoop, this, message));
         }
     }
@@ -127,4 +170,37 @@ void TcpConnection::send(const std::string& message)
 void TcpConnection::sendInLoop(const std::string& message)
 {
     loop_->assertInLoopThread();
+    ssize_t nwrite = 0;
+
+    if (!channel_->isWriting() && 0 == outputBuffer_.readableBytes())
+    {
+        nwrite = ::write(channel_->fd(), message.data(), message.size());
+        if (nwrite >= 0)
+        {
+            if (implicit_cast<size_t>(nwrite) < message.size())
+            {
+                LOG_TRACE << "I am going to write more data...";
+            }
+        }
+        else
+        {
+            nwrite = 0;
+            if (errno != EWOULDBLOCK)// 对于非阻塞socket EAGIN和EWOULDBLOCK不是错误
+            {
+                LOG_SYSERR << "TcpConnection::sendInLoop";
+            }
+        }
+    }
+
+    assert(nwrite >= 0);
+
+    if (implicit_cast<size_t>(nwrite) < message.size())
+    {
+        outputBuffer_.append(message.data()+nwrite, message.size()-nwrite);        
+        if (!channel_->isWriting())
+        {
+            channel_->enableWriting();
+        }
+    }
+
 }

@@ -35,6 +35,12 @@ void Channel::handleEvent(Timestamp receiveTime)
         LOG_WARN <<"Channel::handle_event() POLLNVAL";               
     }
 
+    if ((revents_ & POLLHUP) && !(revents_ &POLLIN))
+    {
+        LOG_WARN << "Channel::handle_event() POLLHUP";
+        if (closeCallback_) closeCallback_();            
+    }
+
     if (revents_ & (POLLIN | POLLPRI | POLLRDHUP)) // read
     {
         if (readCallback_) readCallback_(receiveTime);        

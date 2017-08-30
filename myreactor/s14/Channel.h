@@ -26,8 +26,12 @@ public:
     void setWriteCallback(const EventCallback& cb)
     { writeCallback_ = cb; }
 
-    void setErrorCallback(const EventCallback& cb)
+    void setCloseCallback(const EventCallback& cb)
     { errorCallback_ = cb; }
+
+    void setErrorCallback(const EventCallback& cb)
+    { closeCallback_ = cb; }
+
 
     void handleEvent(Timestamp receiveTime);        
 
@@ -65,6 +69,7 @@ private:
     ReadEventCallback readCallback_;
     EventCallback writeCallback_;
     EventCallback errorCallback_;
+    EventCallback closeCallback_;
 };
 
 }
