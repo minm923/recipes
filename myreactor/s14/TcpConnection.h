@@ -40,6 +40,9 @@ public:
     // Internal use only
     void setCloseCallback(const CloseCallback& cb)    
     { closeCallback_ = cb; }
+
+    void setWriteCompleteCallback(const WriteCompleteCallback& cb)
+    { writeCompleteCallback_ = cb;}
     
     void connectEstablished();
 
@@ -92,6 +95,7 @@ private:
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
     CloseCallback   closeCallback_;
+    WriteCompleteCallback writeCompleteCallback_;        
     Buffer inputBuffer_;
     Buffer outputBuffer_;
 };

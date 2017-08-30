@@ -21,7 +21,7 @@ typedef boost::function<void (const TcpConnectionPtr&,
                               Timestamp)> MessageCallback;
 
 typedef boost::function<void (const TcpConnectionPtr&)> CloseCallback;
-
+typedef boost::function<void (const TcpConnectionPtr&)> WriteCompleteCallback;
 
 }
 
