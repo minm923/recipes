@@ -142,6 +142,16 @@ void TcpConnection::shutdown()
     }
 }
 
+void TcpConnection::setTcpNodelay(bool on)
+{
+    socket_->setTcpNoDelay(on);
+}
+
+void TcpConnection::setKeepAlive(bool on)
+{
+    socket_->setKeepAlive(on);
+}
+
 void TcpConnection::shutdownInLoop()
 {
     loop_->assertInLoopThread();
@@ -202,5 +212,4 @@ void TcpConnection::sendInLoop(const std::string& message)
             channel_->enableWriting();
         }
     }
-
 }

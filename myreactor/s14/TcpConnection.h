@@ -59,6 +59,10 @@ public:
 
     void shutdown();
 
+    void setTcpNodelay(bool on);
+
+    void setKeepAlive(bool on);
+
 private:
     enum StateE { kConnecting, kConnected, kDisconnecting, kDisconnected, };
 

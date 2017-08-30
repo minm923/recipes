@@ -5,9 +5,11 @@
 #include <stdio.h>
 #include "Callback.h"
 #include <string>
+#include <unistd.h>
 
 std::string message1;
 std::string message2;
+int sleepSecond = 0;
 
 void connectionCallback(const muduo::TcpConnectionPtr& conn)
 {
@@ -16,6 +18,10 @@ void connectionCallback(const muduo::TcpConnectionPtr& conn)
         printf("name : %s, %s, %s\n", conn->name().c_str(),
             conn->localAddress().toHostPort().c_str(),
             conn->peerAddress().toHostPort().c_str());        
+        if (sleepSecond > 0)
+        {
+            ::sleep(sleepSecond);
+        }
         conn->send(message1);
         conn->send(message2);
         conn->shutdown();
@@ -49,6 +55,11 @@ int main(int argc, char * argv[])
     {
         len1 = atoi(argv[1]);
         len2 = atoi(argv[2]);
+    }
+
+    if (argc > 3)
+    {
+        sleepSecond = atoi(argv[3]);
     }
 
     message1.resize(len1);

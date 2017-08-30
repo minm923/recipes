@@ -6,12 +6,24 @@
 #include "TimerQueue.h"
 #include <boost/bind.hpp>
 #include <sys/eventfd.h>
+#include <signal.h>
 
 
 using namespace muduo;
 
 __thread EventLoop* t_loopInThisThread = NULL;
 const int kPollTimeMs = 10000;
+
+class IgnoreSigpipe
+{
+    public:
+        IgnoreSigpipe()
+        {
+            ::signal(SIGPIPE, SIG_IGN);
+        }
+};
+
+IgnoreSigpipe initObj;
 
 static int createEventFd()
 {

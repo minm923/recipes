@@ -52,6 +52,10 @@ class Socket : boost::noncopyable
 
   void shutdownWrite();
 
+  void setTcpNoDelay(bool on);
+
+  void setKeepAlive(bool on);
+
  private:
   const int sockfd_;
 };
