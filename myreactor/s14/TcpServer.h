@@ -7,6 +7,7 @@
 #include "Callback.h"
 #include <map>
 #include "InetAddress.h"
+#include "TcpConnection.h"
 
 namespace muduo
 {
