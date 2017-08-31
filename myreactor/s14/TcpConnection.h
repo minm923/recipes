@@ -95,7 +95,7 @@ private:
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
     CloseCallback   closeCallback_;
-    WriteCompleteCallback writeCompleteCallback_;        
+    WriteCompleteCallback writeCompleteCallback_;
     Buffer inputBuffer_;
     Buffer outputBuffer_;
 };

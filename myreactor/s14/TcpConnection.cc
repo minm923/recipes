@@ -100,6 +100,11 @@ void TcpConnection::handleWrite()
             outputBuffer_.retrieve(n);
             if (0 == outputBuffer_.readableBytes())
             {
+                if (writeCompleteCallback_) 
+                {
+                    loop_->queueInLoop(
+                            boost::bind(writeCompleteCallback_, shared_from_this()));
+                }
                 channel_->disableWriting();
                 if (kDisconnecting == state_)
                 {
@@ -190,6 +195,11 @@ void TcpConnection::sendInLoop(const std::string& message)
             if (implicit_cast<size_t>(nwrite) < message.size())
             {
                 LOG_DEBUG << "I am going to write more data..." << (message.size()-nwrite);
+            }
+            else if (writeCompleteCallback_)
+            {
+                loop_->queueInLoop(
+                        boost::bind(writeCompleteCallback_, shared_from_this()));
             }
         }
         else

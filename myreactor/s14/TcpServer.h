@@ -29,6 +29,9 @@ public:
     void setMessageCallback(const MessageCallback& cb)    
     { messageCallback_ = cb; }
 
+    void setWriteCompleteCallback(const WriteCompleteCallback cb)
+    { writeCompleteCallback_ = cb; }
+
 
 private:
     void newConnection(int sockfd, const InetAddress& peerAddr);        
@@ -41,6 +44,7 @@ private:
     boost::scoped_ptr<Acceptor> acceptor_;        
     ConnectionCallback connectionCallback_;    
     MessageCallback messageCallback_;            
+    WriteCompleteCallback writeCompleteCallback_;
     bool started_;
     int nextConnId_;
     ConnectionMap connections_;
