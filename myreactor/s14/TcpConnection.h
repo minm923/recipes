@@ -66,6 +66,8 @@ public:
 
     void setKeepAlive(bool on);
 
+    EventLoop* getEventLoop();
+
 private:
     enum StateE { kConnecting, kConnected, kDisconnecting, kDisconnected, };
 

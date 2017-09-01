@@ -14,6 +14,7 @@ namespace muduo
 
 class EventLoop;    
 class Acceptor;
+class EventLoopThreadPool;
 
 class TcpServer : boost::noncopyable
 {
@@ -21,6 +22,8 @@ public:
 
     TcpServer(EventLoop* loop, const InetAddress& listenAddr);
     ~TcpServer();// force out-line dtor, for scoped_ptr members;    
+
+    void setThreadNum(int numThreads);        
 
     void start();
 
@@ -35,14 +38,16 @@ public:
 
 
 private:
-    void newConnection(int sockfd, const InetAddress& peerAddr);        
+    void newConnection(int sockfd, const InetAddress& peerAddr);
     void removeConnection(const TcpConnectionPtr& conn);
+    void removeConnectionInLoop(const TcpConnectionPtr& conn);
 
     typedef std::map<std::string, TcpConnectionPtr> ConnectionMap;
 
     EventLoop* loop_;    
     const std::string name_;    
     boost::scoped_ptr<Acceptor> acceptor_;        
+    boost::scoped_ptr<EventLoopThreadPool> threadPool_;
     ConnectionCallback connectionCallback_;    
     MessageCallback messageCallback_;            
     WriteCompleteCallback writeCompleteCallback_;

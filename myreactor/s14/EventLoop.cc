@@ -180,7 +180,7 @@ void EventLoop::runInLoop(const Functor& cb)
 void EventLoop::queueInLoop(const Functor& cb)
 {
     {
-        MutexLockGuard lock(mutex_);        
+        MutexLockGuard lock(mutex_);
         pendingFunctors.push_back(cb);
     }
 

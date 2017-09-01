@@ -223,3 +223,8 @@ void TcpConnection::sendInLoop(const std::string& message)
         }
     }
 }
+
+EventLoop* TcpConnection::getEventLoop()
+{
+    return loop_;    
+}
