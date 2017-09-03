@@ -7,6 +7,7 @@
 #include "EventLoop.h"
 #include "SocketsOps.h"
 #include <boost/get_pointer.hpp>
+#include "EventLoopThreadPool.h"
 
 using namespace muduo;
 
@@ -15,6 +16,7 @@ TcpServer::TcpServer(EventLoop* loop, const InetAddress& listenAddr)
     : loop_(CHECK_NOTNULL(loop)),
       name_(listenAddr.toHostPort()),
       acceptor_(new Acceptor(loop_, listenAddr)),
+      threadPool_(new EventLoopThreadPool(loop)),              
       started_(false),
       nextConnId_(1)
 {
@@ -26,11 +28,18 @@ TcpServer::~TcpServer()
 {
 }
 
+void TcpServer::setThreadNum(int numThreads)
+{
+    assert(numThreads >= 0);        
+    threadPool_->setThreadNum(numThreads);    
+}
+
 void TcpServer::start()
 {
     if (!started_)
     {
         started_ = true;
+        threadPool_->start();
     }
 
     if (!acceptor_->listenning())
@@ -38,7 +47,6 @@ void TcpServer::start()
         loop_->runInLoop(boost::bind(&Acceptor::listen, get_pointer(acceptor_)));
     }
 }
-
 
 void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 {
@@ -53,25 +61,33 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
              << "] from " << peerAddr.toHostPort();
 
     InetAddress localAddress(sockets::getLocalAddr(sockfd));
+    EventLoop* ioLoop = threadPool_->getNextLoop();
     TcpConnectionPtr conn(
-        new TcpConnection(loop_, connName, sockfd, localAddress, peerAddr));
+        new TcpConnection(ioLoop, connName, sockfd, localAddress, peerAddr));
     connections_[connName] = conn;    
     conn->setConnectionCallback(connectionCallback_);
     conn->setMessageCallback(messageCallback_);
     conn->setWriteCompleteCallback(writeCompleteCallback_);
     conn->setCloseCallback(
-       boost::bind(&TcpServer::removeConnection, this, _1));    
-    conn->connectEstablished();
+        boost::bind(&TcpServer::removeConnection, this, _1));    
+    ioLoop->runInLoop(
+        boost::bind(&TcpConnection::connectEstablished, conn));
 }
 
 void TcpServer::removeConnection(const TcpConnectionPtr& conn)
+{
+    loop_->runInLoop(
+        boost::bind(&TcpServer::removeConnectionInLoop, this, conn));
+}
+
+void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& conn)
 {
     loop_->assertInLoopThread();
     LOG_INFO << "TcpServer::removeConnection [" << name_
              << "] - connection :" << conn->name();
     ssize_t n = connections_.erase(conn->name());
-    assert(1 == n);
-    (void) n;
-    loop_->queueInLoop(
-            boost::bind(&TcpConnection::connectDestroyed, conn));    
+    assert(1 == n);(void) n;
+    EventLoop* ioLoop = conn->getEventLoop();    
+    ioLoop->queueInLoop(
+        boost::bind(&TcpConnection::connectDestroyed, conn));    
 }

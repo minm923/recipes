@@ -1,9 +1,11 @@
 #include "EventLoopThreadPool.h"
+#include "EventLoop.h"
+#include "EventLoopThread.h"
 
 using namespace muduo;
 
 EventLoopThreadPool::EventLoopThreadPool(EventLoop* baseLoop)
-    : baseLoop(baseLoop),    
+    : baseLoop_(baseLoop),    
       started_(false),
       numThreads_(0),
       next_(0)
@@ -12,7 +14,7 @@ EventLoopThreadPool::EventLoopThreadPool(EventLoop* baseLoop)
 }
 
 
-EventLoopThreadPool::~EventLoopThreadPool
+EventLoopThreadPool::~EventLoopThreadPool()
 {
     // do not delete loop, stack variable
 }
@@ -26,7 +28,7 @@ void EventLoopThreadPool::start()
 
     for (int i=0; i < numThreads_; ++i)
     {
-        EventLoopThread* t = new EventLoopThread;
+        EventLoopThread* t = new EventLoopThread();
         threads_.push_back(t);
         loops_.push_back(t->startLoop());
     }
@@ -39,7 +41,7 @@ EventLoop* EventLoopThreadPool::getNextLoop()
 
     if (!loops_.empty())
     {
-        loop_ = loops_[next_];
+        loop = loops_[next_];
         ++next_;
 
         if (static_cast<size_t>(next_) >= loops_.size())
@@ -50,8 +52,4 @@ EventLoop* EventLoopThreadPool::getNextLoop()
 
     return loop;
 }
-
-
-
-
 

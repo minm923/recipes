@@ -59,6 +59,7 @@ int main()
   muduo::EventLoop loop;
 
   muduo::TcpServer server(&loop, listenAddr);
+  server.setThreadNum(2);
   server.setConnectionCallback(onConnection);
   server.setMessageCallback(onMessage);
   server.setWriteCompleteCallback(onWriteComplete);
