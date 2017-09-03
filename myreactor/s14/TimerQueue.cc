@@ -5,7 +5,9 @@
 #include <sys/timerfd.h>
 #include "TimerId.h"
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include "logging/Logging.h"
+
 
 
 namespace muduo
@@ -79,7 +81,8 @@ TimerQueue::TimerQueue(EventLoop * loop)
     : loop_(loop),    
       timerfd_(createTimerfd()),
       timerfdChannel_(loop, timerfd_),
-      timers_()
+      timers_(),
+      callingExpiredTimers_(false)
 {
     timerfdChannel_.setReadCallback(
             boost::bind(&TimerQueue::handleRead, this));
@@ -104,7 +107,7 @@ TimerId TimerQueue::addTimer(const TimerCallback& cb, Timestamp when, double int
     loop_->runInLoop(
         boost::bind(&TimerQueue::addTimerInLoop, this, timer));
    
-    return TimerId(timer);
+    return TimerId(timer, timer->sequence());
 }
 
 void TimerQueue::addTimerInLoop(Timer* timer)
@@ -121,6 +124,8 @@ void TimerQueue::addTimerInLoop(Timer* timer)
 
 bool TimerQueue::insert(Timer * timer)
 {
+    loop_->assertInLoopThread();
+    assert(timers_.size() == activeTimers_.size());
     bool earlistChanged = false;
     Timestamp when = timer->expiration();
     TimerList::iterator it = timers_.begin();
@@ -129,10 +134,19 @@ bool TimerQueue::insert(Timer * timer)
         earlistChanged = true;        
     }
 
-    std::pair<TimerList::iterator, bool> result = 
-        timers_.insert(std::make_pair(when, timer));
+    {
+        std::pair<TimerList::iterator, bool> result = 
+            timers_.insert(std::make_pair(when, timer));
+        assert(result.second);(void)result;        
+    }
 
-    assert(result.second);    
+    {
+        std::pair<ActiveTimerSet::iterator, bool> result = 
+            activeTimers_.insert(ActiveTimer(timer, timer->sequence()));
+        assert(result.second);(void)result;        
+    }
+
+    assert(timers_.size() == activeTimers_.size());
 
     return earlistChanged;
 }
@@ -147,12 +161,16 @@ void TimerQueue::handleRead()
     // 获得到期定时器
     std::vector<Entry> expired = getExpired(now);
 
+    callingExpiredTimers_ = true;
+    cancelingExpiredTimers_.clear();
     // 回调
     for (std::vector<Entry>::iterator it = expired.begin();
         it != expired.end(); ++it)
     {
         it->second->run();
     }
+
+    callingExpiredTimers_ = false;
     
     // 重置定时器
     reset(expired, now);    
@@ -160,13 +178,22 @@ void TimerQueue::handleRead()
 
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
 {
+    assert(timers_.size() == activeTimers_.size());    
     std::vector<Entry> expired;
     Entry sentry = std::make_pair(now, reinterpret_cast<Timer*>(UINTPTR_MAX));
     TimerList::iterator it = timers_.lower_bound(sentry);
     assert(it == timers_.end() || now < it->first);
     std::copy(timers_.begin(), it, back_inserter(expired));
     timers_.erase(timers_.begin(), it);
+
+    BOOST_FOREACH(Entry entry, expired)    
+    {
+        ActiveTimer timer(entry.second, entry.second->sequence());
+        size_t n = activeTimers_.erase(timer);
+        assert(n == 1);(void) n;
+    }
     
+    assert(timers_.size() == activeTimers_.size());
     return expired;
 }
 
@@ -175,7 +202,9 @@ void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now)
     for (std::vector<Entry>::const_iterator it = expired.begin();
         it != expired.end(); ++it)
     {
-        if (it->second->repeat())
+        ActiveTimer timer(it->second, it->second->sequence());
+        if (it->second->repeat()
+            && cancelingExpiredTimers_.find(timer) == cancelingExpiredTimers_.end())
         {
             it->second->restart(now);
             insert(it->second);
@@ -197,3 +226,32 @@ void TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now)
         resetTimerfd(timerfd_, nextExpire);
     }
 }
+
+void TimerQueue::cancel(TimerId timerId)
+{
+    loop_->runInLoop(
+        boost::bind(&TimerQueue::cancelInLoop, this, timerId));
+}
+
+void TimerQueue::cancelInLoop(TimerId timerId)
+{
+    loop_->assertInLoopThread();    
+    assert(timers_.size() == activeTimers_.size());    
+    ActiveTimer timer(timerId.value_, timerId.sequence_);
+    ActiveTimerSet::iterator it = activeTimers_.find(timer);
+    if (it != activeTimers_.end())
+    {
+        size_t n = timers_.erase(Entry(it->first->expiration(), it->first));        
+        assert(n == 1);(void)n;
+        delete it->first;
+        activeTimers_.erase(it);
+    }
+    else if (callingExpiredTimers_)
+    {
+        cancelingExpiredTimers_.insert(timer);        
+    }
+
+    assert(timers_.size() == activeTimers_.size()); 
+}
+
+

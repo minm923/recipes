@@ -53,6 +53,8 @@ public:
     void wakeup();
 
     void removeChannel(Channel* channel);
+
+    void cancel(TimerId timerId);
 private:    
     typedef std::vector<Channel*> ChannelList;
     

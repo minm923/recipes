@@ -13,14 +13,17 @@ class Timer;
 class TimerId : public muduo::copyable
 {
     public:
-        explicit TimerId(Timer* timer)       
-            : value_(timer)             
+        explicit TimerId(Timer* timer = NULL, int64_t seq = 0)       
+            : value_(timer),
+              sequence_(seq)            
         {
         }
 
+        friend class TimerQueue;
+
     private:
         Timer * value_;
-
+        int64_t sequence_;
 };
 
 }// mudo

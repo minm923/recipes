@@ -4,6 +4,7 @@
 #include <boost/noncopyable.hpp>
 #include "Callback.h"
 #include "datetime/Timestamp.h"
+#include "thread/Atomic.h"
 
 namespace muduo
 {
@@ -16,7 +17,8 @@ public:
         : callback_(cb),
           expiration_(when),
           interval_(interval),
-          repeat_(interval > 0.0)
+          repeat_(interval > 0.0),
+          sequence_(s_numCreated_.incrementAndGet())
     { }
 
     void run() const
@@ -30,11 +32,16 @@ public:
 
     void restart(Timestamp now);
 
+    int64_t sequence() const { return sequence_; }
+
     private:
         const TimerCallback callback_;
         Timestamp expiration_;
         double interval_;
         bool   repeat_;
+        const int64_t sequence_;
+
+        static AtomicInt64 s_numCreated_;
 };
 
 }// muduo
